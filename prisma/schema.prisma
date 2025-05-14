@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(PATIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profile       Profile?
+  accounts      Account[]
+  sessions      Session[]
+  documents     Document[]
+
+  @@map("users")
+}
+
+model Profile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth    DateTime?
+  gender         String?
+  diabetesType   String?
+  diagnosisDate  DateTime?
+  height         Float?
+  weight         Float?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  healthMetrics  HealthMetric[]
+
+  @@map("profiles")
+}
+
+model HealthMetric {
+  id          String    @id @default(cuid())
+  profileId   String
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type        String    // e.g., "blood_glucose", "weight", "blood_pressure"
+  value       Float
+  unit        String
+  timestamp   DateTime  @default(now())
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("health_metrics")
+}
+
+model Document {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  type        String    // e.g., "prescription", "lab_report"
+  path        String
+  mimeType    String
+  size        Int
+  ocrText     String?   @db.Text
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("documents")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+enum Role {
+  PATIENT
+  FAMILY_MEMBER
+  DOCTOR
+  ADMIN
+}
