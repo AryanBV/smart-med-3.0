@@ -1,3 +1,10 @@
+:root {
+  /* Add brand color variables */
+  --brand: #24E5C6;
+  --brand-hover: #20d6b8;
+}
+
+/* Your existing CSS remains... */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -120,3 +127,4 @@
     @apply bg-background text-foreground;
   }
 }
+

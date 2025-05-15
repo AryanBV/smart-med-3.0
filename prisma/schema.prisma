@@ -21,6 +21,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   documents     Document[]
+  familyMembers FamilyMember[] 
 
   @@map("users")
 }
@@ -42,17 +43,41 @@ model Profile {
   @@map("profiles")
 }
 
+model FamilyMember {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  dateOfBirth     DateTime?
+  gender          String?
+  relationship    String?
+  diabetesType    String?
+  diagnosisDate   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  parentId        String?
+  parent          FamilyMember?  @relation("FamilyRelation", fields: [parentId], references: [id])
+  children        FamilyMember[] @relation("FamilyRelation")
+  healthMetrics   HealthMetric[]
+
+  @@map("family_members")
+}
+
 model HealthMetric {
-  id          String    @id @default(cuid())
-  profileId   String
-  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  type        String    // e.g., "blood_glucose", "weight", "blood_pressure"
-  value       Float
-  unit        String
-  timestamp   DateTime  @default(now())
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  profileId       String?
+  profile         Profile?  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  familyMemberId  String?
+  familyMember    FamilyMember? @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  type            String    // e.g., "blood_glucose", "weight", "blood_pressure", "hba1c"
+  value           Float
+  unit            String
+  timestamp       DateTime  @default(now())
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  documentId      String?
+  document        Document? @relation(fields: [documentId], references: [id])
 
   @@map("health_metrics")
 }
@@ -70,6 +95,7 @@ model Document {
   metadata    Json?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  healthMetrics HealthMetric[]
 
   @@map("documents")
 }
